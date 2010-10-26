@@ -47,6 +47,7 @@ public:
     virtual gboolean processKeyEvent (guint keyval, guint keycode, guint modifiers);
     virtual gboolean processSpace (guint keyval, guint keycode, guint modifiers);
     virtual gboolean processFunctionKey (guint keyval, guint keycode, guint modifiers);
+    virtual gboolean commitFirstCandidate (guint keyval, guint keycode, guint modifiers);
     virtual void updateLookupTable ();
     virtual void updateLookupTableFast ();
     virtual gboolean fillLookupTableByPage ();

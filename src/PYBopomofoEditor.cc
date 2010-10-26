@@ -328,6 +328,20 @@ BopomofoEditor::processBopomofo (guint keyval, guint keycode, guint modifiers)
 }
 
 gboolean
+BopomofoEditor::processEnter (guint keyval, guint keycode, guint modifiers)
+{
+    if (m_config.enterKey())
+    {
+        m_select_mode = TRUE;
+        return commitFirstCandidate (keyval, keycode, modifiers);
+    }
+    else
+    {
+        return PhoneticEditor::processFunctionKey (keyval, keycode, modifiers);
+    }
+}
+
+gboolean
 BopomofoEditor::processKeyEvent (guint keyval, guint keycode, guint modifiers)
 {
     modifiers &= (IBUS_SHIFT_MASK |
@@ -353,6 +367,9 @@ BopomofoEditor::processKeyEvent (guint keyval, guint keycode, guint modifiers)
         m_select_mode = TRUE;
         return processSpace (keyval, keycode, modifiers);
 
+    case IBUS_Return:
+    case IBUS_KP_Enter:
+        return processEnter (keyval, keycode, modifiers);
     case IBUS_Up:
     case IBUS_KP_Up:
     case IBUS_Down:
@@ -456,12 +473,7 @@ BopomofoEditor::commit (void)
 
     m_buffer.clear ();
 
-    if (!m_select_mode && m_config.enterKey ()) {
-        m_phrase_editor.selectCandidate(0);
-    }
-
-
-    if (m_select_mode || m_config.enterKey ()) {
+    if (m_select_mode) {
         m_buffer << m_phrase_editor.selectedString ();
 
         const gchar *p;
