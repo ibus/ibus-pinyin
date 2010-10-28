@@ -458,7 +458,7 @@ BopomofoConfig::readDefaultValues (void)
 
     m_select_keys = read (CONFIG_SELECT_KEYS, 0);
     if (m_select_keys >= 9) m_select_keys = 0;
-    m_guide_key = read (CONFIG_GUIDE_KEY, true);
+    m_guide_key = read (CONFIG_GUIDE_KEY, false);
     m_auxiliary_select_key_f = read (CONFIG_AUXILIARY_SELECT_KEY_F, true);
     m_auxiliary_select_key_kp = read (CONFIG_AUXILIARY_SELECT_KEY_KP, true);
     m_enter_key = read (CONFIG_ENTER_KEY, true);
