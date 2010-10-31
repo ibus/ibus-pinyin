@@ -654,4 +654,11 @@ BopomofoEditor::keyvalToBopomofo(gint ch)
     return brs[1];
 }
 
+void
+BopomofoEditor::candidateClicked (guint index, guint button, guint state)
+{
+    m_select_mode = TRUE;
+    selectCandidateInPage (index);
+}
+
 };
