@@ -63,6 +63,14 @@ BopomofoEditor::insert (gint ch)
     if (G_UNLIKELY (m_text.length () >= MAX_PINYIN_LEN))
         return TRUE;
 
+    /* enable first tone & first char is space */
+    if (!m_config.guideKey () &&
+        keyvalToBopomofo (ch) == BOPOMOFO_TONE_1 &&
+        m_text.length () == 0)
+    {
+        return FALSE;
+    }
+
     m_text.insert (m_cursor++, ch);
 
     if (G_UNLIKELY (!(m_config.option () & PINYIN_INCOMPLETE_PINYIN))) {
