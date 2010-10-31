@@ -330,6 +330,10 @@ BopomofoEditor::processBopomofo (guint keyval, guint keycode, guint modifiers)
     if (keyvalToBopomofo (keyval) == BOPOMOFO_ZERO)
         return FALSE;
 
+    if (keyvalToBopomofo (keyval) == BOPOMOFO_TONE_1 &&
+        m_select_mode == TRUE)
+        return FALSE;
+
     m_select_mode = FALSE;
 
     return insert (keyval);
@@ -367,7 +371,7 @@ BopomofoEditor::processKeyEvent (guint keyval, guint keycode, guint modifiers)
         return TRUE;
     if (G_UNLIKELY (processAuxiliarySelectKey (keyval, keycode, modifiers)))
         return TRUE;
-    if (m_select_mode == FALSE && G_UNLIKELY (processBopomofo (keyval, keycode ,modifiers)))
+    if (G_UNLIKELY (processBopomofo (keyval, keycode ,modifiers)))
         return TRUE;
 
     switch (keyval) {
