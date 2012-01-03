@@ -63,6 +63,14 @@ BopomofoEditor::insert (gint ch)
     if (G_UNLIKELY (m_text.length () >= MAX_PINYIN_LEN))
         return TRUE;
 
+    /* enable first tone & first char is space */
+    if (!m_config.guideKey () &&
+        keyvalToBopomofo (ch) == BOPOMOFO_TONE_1 &&
+        m_text.length () == 0)
+    {
+        return FALSE;
+    }
+
     m_text.insert (m_cursor++, ch);
 
     if (G_UNLIKELY (!(m_config.option () & PINYIN_INCOMPLETE_PINYIN))) {
@@ -322,9 +330,27 @@ BopomofoEditor::processBopomofo (guint keyval, guint keycode, guint modifiers)
     if (keyvalToBopomofo (keyval) == BOPOMOFO_ZERO)
         return FALSE;
 
+    if (keyvalToBopomofo (keyval) == BOPOMOFO_TONE_1 &&
+        m_select_mode == TRUE)
+        return FALSE;
+
     m_select_mode = FALSE;
 
     return insert (keyval);
+}
+
+gboolean
+BopomofoEditor::processEnter (guint keyval, guint keycode, guint modifiers)
+{
+    if (m_config.enterKey())
+    {
+        m_select_mode = TRUE;
+        return commitFirstCandidate (keyval, keycode, modifiers);
+    }
+    else
+    {
+        return PhoneticEditor::processFunctionKey (keyval, keycode, modifiers);
+    }
 }
 
 gboolean
@@ -353,6 +379,9 @@ BopomofoEditor::processKeyEvent (guint keyval, guint keycode, guint modifiers)
         m_select_mode = TRUE;
         return processSpace (keyval, keycode, modifiers);
 
+    case IBUS_Return:
+    case IBUS_KP_Enter:
+        return processEnter (keyval, keycode, modifiers);
     case IBUS_Up:
     case IBUS_KP_Up:
     case IBUS_Down:
@@ -429,7 +458,7 @@ BopomofoEditor::updateAuxiliaryText (void)
         for (guint sj = 0; m_pinyin[i]->bopomofo[sj] == bopomofo_char[keyvalToBopomofo(m_text.c_str()[si])] ; si++,sj++);
         if (si < m_text_len) {
             gint ch = keyvalToBopomofo(m_text.c_str()[si]);
-            if (ch >= BOPOMOFO_TONE_2 && ch <= BOPOMOFO_TONE_5) {
+            if (ch >= BOPOMOFO_TONE_1 && ch <= BOPOMOFO_TONE_5) {
                 m_buffer.appendUnichar(bopomofo_char[ch]);
                 ++si;
             }
@@ -456,12 +485,7 @@ BopomofoEditor::commit (void)
 
     m_buffer.clear ();
 
-    if (!m_select_mode && m_config.enterKey ()) {
-        m_phrase_editor.selectCandidate(0);
-    }
-
-
-    if (m_select_mode || m_config.enterKey ()) {
+    if (m_select_mode) {
         m_buffer << m_phrase_editor.selectedString ();
 
         const gchar *p;
@@ -628,6 +652,13 @@ BopomofoEditor::keyvalToBopomofo(gint ch)
     if (G_UNLIKELY (brs == NULL))
         return BOPOMOFO_ZERO;
     return brs[1];
+}
+
+void
+BopomofoEditor::candidateClicked (guint index, guint button, guint state)
+{
+    m_select_mode = TRUE;
+    selectCandidateInPage (index);
 }
 
 };

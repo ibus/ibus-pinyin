@@ -39,6 +39,12 @@ PhoneticEditor::PhoneticEditor (PinyinProperties & props, Config & config)
 gboolean
 PhoneticEditor::processSpace (guint keyval, guint keycode, guint modifiers)
 {
+    return commitFirstCandidate (keyval, keycode, modifiers);
+}
+
+gboolean
+PhoneticEditor::commitFirstCandidate (guint keyval, guint keycode, guint modifiers)
+{
     if (!m_text)
         return FALSE;
     if (cmshm_filter (modifiers) != 0)

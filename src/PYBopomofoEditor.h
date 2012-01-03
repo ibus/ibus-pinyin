@@ -45,6 +45,9 @@ protected:
     gboolean processSelectKey (guint keyval, guint keycode, guint modifiers);
     gboolean processBopomofo (guint keyval, guint keycode, guint modifiers);
     gboolean processKeyEvent (guint keyval, guint keycode, guint modifiers);
+    gboolean processEnter (guint keyval, guint keycode, guint modifiers);
+
+    void candidateClicked (guint index, guint button, guint state);
 
     void updateAuxiliaryText ();
     void updateLookupTable ();

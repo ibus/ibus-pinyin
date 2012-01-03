@@ -319,3 +319,12 @@ msgstr "輸出原本的英文字"
 
 msgid "Commit first candidate"
 msgstr "輸出第一個候選詞"
+
+msgid "Feature of Space key:"
+msgstr "空白键功能："
+
+msgid "Chinese first tone"
+msgstr "作为阴平声调（一声）"
+
+msgid "Guide key"
+msgstr "作为导引键"
