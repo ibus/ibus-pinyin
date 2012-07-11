@@ -155,7 +155,7 @@ ibus_pinyin_engine_constructor (GType                  type,
                                                            construct_params);
     name = ibus_engine_get_name ((IBusEngine *) engine);
 
-    if (name && 
+    if (name &&
         (std::strcmp (name, "bopomofo") == 0 || std::strcmp (name, "bopomofo-debug") == 0)) {
         engine->engine = new BopomofoEngine (IBUS_ENGINE (engine));
     }
@@ -225,4 +225,3 @@ Engine::~Engine (void)
 }
 
 };
-

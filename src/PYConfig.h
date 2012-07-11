@@ -25,10 +25,15 @@
 #  include <config.h>
 #endif
 
-#include <string>
+#include <PyZy/Const.h>
+#include <PyZy/InputContext.h>
+#include <PyZy/Variant.h>
 #include <ibus.h>
-#include "PYUtil.h"
+#include <set>
+#include <string>
+
 #include "PYObject.h"
+#include "PYUtil.h"
 
 namespace PY {
 
@@ -60,7 +65,10 @@ public:
     gboolean guideKey (void) const              { return m_guide_key; }
     gboolean auxiliarySelectKeyF (void) const   { return m_auxiliary_select_key_f; }
     gboolean auxiliarySelectKeyKP (void) const  { return m_auxiliary_select_key_kp; }
-    gboolean enterKey (void) const  { return m_enter_key; }
+    gboolean enterKey (void) const              { return m_enter_key; }
+
+    virtual void addContext (PyZy::InputContext * context);
+    bool removeContext (PyZy::InputContext * context);
 
 protected:
     bool read (const gchar * name, bool defval);
@@ -72,6 +80,10 @@ protected:
     virtual gboolean valueChanged (const std::string  &section,
                                    const std::string  &name,
                                    GVariant           *value);
+
+    void updateContext (PyZy::InputContext::PropertyName name,
+                        const PyZy::Variant & variant);
+
 private:
     static void valueChangedCallback (IBusConfig     *config,
                                       const gchar    *section,
@@ -108,6 +120,8 @@ protected:
     gboolean m_auxiliary_select_key_kp;
 
     gboolean m_enter_key;
+
+    std::set<PyZy::InputContext *> m_contexts;
 };
 
 /* PinyinConfig */
@@ -115,6 +129,7 @@ class PinyinConfig : public Config {
 public:
     static void init (Bus & bus);
     static PinyinConfig & instance (void) { return *m_instance; }
+    virtual void addContext (PyZy::InputContext * context);
 
 protected:
     PinyinConfig (Bus & bus);
@@ -123,6 +138,7 @@ protected:
     virtual gboolean valueChanged (const std::string &section,
                                    const std::string &name,
                                    GVariant          *value);
+
 
 private:
     static std::unique_ptr<PinyinConfig> m_instance;
@@ -133,6 +149,7 @@ class BopomofoConfig : public Config {
 public:
     static void init (Bus & bus);
     static BopomofoConfig & instance (void) { return *m_instance; }
+    virtual void addContext (PyZy::InputContext * context);
 
 protected:
     BopomofoConfig (Bus & bus);

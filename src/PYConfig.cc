@@ -20,9 +20,8 @@
  */
 #include "PYConfig.h"
 
-#include "PYTypes.h"
 #include "PYBus.h"
-#include "PYDoublePinyinTable.h"
+#include "PYTypes.h"
 
 namespace PY {
 
@@ -100,6 +99,8 @@ Config::initDefaultValues (void)
 {
     m_option = PINYIN_DEFAULT_OPTION;
     m_option_mask = PINYIN_INCOMPLETE_PINYIN | PINYIN_CORRECT_ALL;
+    updateContext (PyZy::InputContext::PROPERTY_CONVERSION_OPTION,
+                   PyZy::Variant::fromUnsignedInt (option ()));
 
     m_orientation = IBUS_ORIENTATION_HORIZONTAL;
     m_page_size = 5;
@@ -108,15 +109,13 @@ Config::initDefaultValues (void)
     m_comma_period_page = TRUE;
     m_auto_commit = FALSE;
 
-    m_double_pinyin = FALSE;
-    m_double_pinyin_schema = 0;
-    m_double_pinyin_show_raw = FALSE;
-
     m_init_chinese = TRUE;
     m_init_full = FALSE;
     m_init_full_punct = TRUE;
     m_init_simp_chinese = TRUE;
     m_special_phrases = TRUE;
+    updateContext (PyZy::InputContext::PROPERTY_SPECIAL_PHRASE,
+                   PyZy::Variant::fromBool (m_special_phrases));
 }
 
 static const struct {
@@ -203,6 +202,8 @@ Config::readDefaultValues (void)
             m_option &= ~options[i].option;
         }
     }
+    updateContext (PyZy::InputContext::PROPERTY_CONVERSION_OPTION,
+                   PyZy::Variant::fromUnsignedInt (option ()));
 #endif
 }
 
@@ -311,6 +312,8 @@ Config::valueChanged (const std::string &section,
             m_option_mask |= PINYIN_FUZZY_ALL;
         else
             m_option_mask &= ~PINYIN_FUZZY_ALL;
+        updateContext (PyZy::InputContext::PROPERTY_CONVERSION_OPTION,
+                       PyZy::Variant::fromUnsignedInt (option ()));
     }
     else {
         for (guint i = 0; i < G_N_ELEMENTS (options); i++) {
@@ -321,6 +324,8 @@ Config::valueChanged (const std::string &section,
                 m_option |= options[i].option;
             else
                 m_option &= ~options[i].option;
+            updateContext (PyZy::InputContext::PROPERTY_CONVERSION_OPTION,
+                           PyZy::Variant::fromUnsignedInt (option ()));
             return TRUE;
         }
         return FALSE;
@@ -336,6 +341,33 @@ Config::valueChangedCallback (IBusConfig  *config,
                               Config      *self)
 {
     self->valueChanged (section, name, value);
+}
+
+void
+Config::addContext (PyZy::InputContext *context)
+{
+    context->setProperty (PyZy::InputContext::PROPERTY_CONVERSION_OPTION,
+                          PyZy::Variant::fromUnsignedInt (option ()));
+    context->setProperty (PyZy::InputContext::PROPERTY_SPECIAL_PHRASE,
+                          PyZy::Variant::fromBool (m_special_phrases));
+
+    m_contexts.insert (context);
+}
+
+bool
+Config::removeContext (PyZy::InputContext *context)
+{
+    return m_contexts.erase (context);
+}
+
+void
+Config::updateContext (PyZy::InputContext::PropertyName name,
+                       const PyZy::Variant & variant)
+{
+    for (std::set<PyZy::InputContext *>::iterator it = m_contexts.begin ();
+         it != m_contexts.end(); ++it) {
+        (*it)->setProperty (name, variant);
+    }
 }
 
 static const struct {
@@ -377,10 +409,12 @@ PinyinConfig::readDefaultValues (void)
     /* double pinyin */
     m_double_pinyin = read (CONFIG_DOUBLE_PINYIN, false);
     m_double_pinyin_schema = read (CONFIG_DOUBLE_PINYIN_SCHEMA, 0);
-    if (m_double_pinyin_schema > DOUBLE_PINYIN_LAST) {
+    if (m_double_pinyin_schema >= DOUBLE_PINYIN_KEYBOARD_LAST) {
         m_double_pinyin_schema = 0;
         g_warn_if_reached ();
     }
+    updateContext (PyZy::InputContext::PROPERTY_DOUBLE_PINYIN_SCHEMA,
+                   PyZy::Variant::fromUnsignedInt (m_double_pinyin_schema));
     m_double_pinyin_show_raw = read (CONFIG_DOUBLE_PINYIN_SHOW_RAW, false);
 
     /* init states */
@@ -390,6 +424,8 @@ PinyinConfig::readDefaultValues (void)
     m_init_simp_chinese = read (CONFIG_INIT_SIMP_CHINESE, true);
 
     m_special_phrases = read (CONFIG_SPECIAL_PHRASES, true);
+    updateContext (PyZy::InputContext::PROPERTY_SPECIAL_PHRASE,
+                   PyZy::Variant::fromBool (m_special_phrases));
 
     /* other */
     m_shift_select_candidate = read (CONFIG_SHIFT_SELECT_CANDIDATE, false);
@@ -411,6 +447,8 @@ PinyinConfig::readDefaultValues (void)
         else
             m_option &= ~pinyin_options[i].option;
     }
+    updateContext (PyZy::InputContext::PROPERTY_CONVERSION_OPTION,
+                   PyZy::Variant::fromUnsignedInt (option ()));
 #endif
 }
 
@@ -430,10 +468,12 @@ PinyinConfig::valueChanged (const std::string &section,
         m_double_pinyin = normalizeGVariant (value, false);
     else if (CONFIG_DOUBLE_PINYIN_SCHEMA == name) {
         m_double_pinyin_schema = normalizeGVariant (value, 0);
-        if (m_double_pinyin_schema > DOUBLE_PINYIN_LAST) {
+        if (m_double_pinyin_schema >= DOUBLE_PINYIN_KEYBOARD_LAST) {
             m_double_pinyin_schema = 0;
             g_warn_if_reached ();
         }
+        updateContext (PyZy::InputContext::PROPERTY_DOUBLE_PINYIN_SCHEMA,
+                       PyZy::Variant::fromUnsignedInt (m_double_pinyin_schema));
     }
     else if (CONFIG_DOUBLE_PINYIN_SHOW_RAW == name)
         m_double_pinyin_show_raw = normalizeGVariant (value, false);
@@ -446,8 +486,11 @@ PinyinConfig::valueChanged (const std::string &section,
         m_init_full_punct = normalizeGVariant (value, true);
     else if (CONFIG_INIT_SIMP_CHINESE == name)
         m_init_simp_chinese = normalizeGVariant (value, true);
-    else if (CONFIG_SPECIAL_PHRASES == name)
+    else if (CONFIG_SPECIAL_PHRASES == name) {
         m_special_phrases = normalizeGVariant (value, true);
+        updateContext (PyZy::InputContext::PROPERTY_SPECIAL_PHRASE,
+                       PyZy::Variant::fromBool (m_special_phrases));
+    }
     /* others */
     else if (CONFIG_SHIFT_SELECT_CANDIDATE == name)
         m_shift_select_candidate = normalizeGVariant (value, false);
@@ -463,6 +506,8 @@ PinyinConfig::valueChanged (const std::string &section,
             m_option_mask |= PINYIN_CORRECT_ALL;
         else
             m_option_mask &= ~PINYIN_CORRECT_ALL;
+        updateContext (PyZy::InputContext::PROPERTY_CONVERSION_OPTION,
+                       PyZy::Variant::fromUnsignedInt (option ()));
     }
     else {
         for (guint i = 0; i < G_N_ELEMENTS (pinyin_options); i++) {
@@ -473,11 +518,23 @@ PinyinConfig::valueChanged (const std::string &section,
                 m_option |= pinyin_options[i].option;
             else
                 m_option &= ~pinyin_options[i].option;
+            updateContext (PyZy::InputContext::PROPERTY_CONVERSION_OPTION,
+                           PyZy::Variant::fromUnsignedInt (option ()));
             return TRUE;
         }
         return FALSE;
     }
     return TRUE;
+}
+
+void
+PinyinConfig::addContext (PyZy::InputContext *context)
+{
+    context->setProperty (
+        PyZy::InputContext::PROPERTY_DOUBLE_PINYIN_SCHEMA,
+        PyZy::Variant::fromUnsignedInt (m_double_pinyin_schema));
+
+    Config::addContext (context);
 }
 
 BopomofoConfig::BopomofoConfig (Bus & bus)
@@ -506,8 +563,12 @@ BopomofoConfig::readDefaultValues (void)
     m_init_simp_chinese = read (CONFIG_INIT_SIMP_CHINESE, false);
 
     m_special_phrases = read (CONFIG_SPECIAL_PHRASES, false);
+    updateContext (PyZy::InputContext::PROPERTY_SPECIAL_PHRASE,
+                   PyZy::Variant::fromBool (m_special_phrases));
 
     m_bopomofo_keyboard_mapping = read (CONFIG_BOPOMOFO_KEYBOARD_MAPPING, 0);
+    updateContext (PyZy::InputContext::PROPERTY_BOPOMOFO_SCHEMA,
+                   PyZy::Variant::fromUnsignedInt (m_bopomofo_keyboard_mapping));
 
     m_select_keys = read (CONFIG_SELECT_KEYS, 0);
     if (m_select_keys >= 9) m_select_keys = 0;
@@ -538,10 +599,16 @@ BopomofoConfig::valueChanged (const std::string &section,
         m_init_full_punct = normalizeGVariant (value, true);
     else if (CONFIG_INIT_SIMP_CHINESE == name)
         m_init_simp_chinese = normalizeGVariant (value, false);
-    else if (CONFIG_SPECIAL_PHRASES == name)
+    else if (CONFIG_SPECIAL_PHRASES == name) {
         m_special_phrases = normalizeGVariant (value, false);
-    else if (CONFIG_BOPOMOFO_KEYBOARD_MAPPING == name)
+        updateContext (PyZy::InputContext::PROPERTY_SPECIAL_PHRASE,
+                       PyZy::Variant::fromBool (m_special_phrases));
+    }
+    else if (CONFIG_BOPOMOFO_KEYBOARD_MAPPING == name) {
         m_bopomofo_keyboard_mapping = normalizeGVariant (value, 0);
+        updateContext (PyZy::InputContext::PROPERTY_BOPOMOFO_SCHEMA,
+                       PyZy::Variant::fromUnsignedInt (m_bopomofo_keyboard_mapping));
+    }
     else if (CONFIG_SELECT_KEYS == name) {
         m_select_keys = normalizeGVariant (value, 0);
         if (m_select_keys >= 9) m_select_keys = 0;
@@ -558,5 +625,15 @@ BopomofoConfig::valueChanged (const std::string &section,
         return FALSE;
     return TRUE;
 
+}
+
+void
+BopomofoConfig::addContext (PyZy::InputContext *context)
+{
+    context->setProperty (
+        PyZy::InputContext::PROPERTY_BOPOMOFO_SCHEMA,
+        PyZy::Variant::fromUnsignedInt (m_bopomofo_keyboard_mapping));
+
+    Config::addContext (context);
 }
 };

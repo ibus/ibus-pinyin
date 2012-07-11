@@ -56,37 +56,17 @@ PKG_CHECK_MODULES(IBUS, [
     ibus-1.0 >= 1.3.99
 ])
 
+# check pyzy
+PKG_CHECK_MODULES(PYZY, [
+    pyzy-1.0 >= 0.0.8
+])
+AC_PATH_PROG(PYZY, pyzy-1.0)
+
 # check sqlite
 PKG_CHECK_MODULES(SQLITE, [
     sqlite3
 ])
 AC_PATH_PROG(SQLITE3, sqlite3)
-
-# check uuid
-AC_CHECK_FUNCS([uuid_create], [], [
-    PKG_CHECK_MODULES(LIBUUID, uuid, [
-        # uuid.pc exist
-        AC_DEFINE(HAVE_LIBUUID, 1, [Define if found libuuid])
-        HAVE_LIBUUID=yes
-    ], [
-        # uuid.pc does not exist
-        uuid_old_LIBS=$LIBS
-        AC_CHECK_HEADERS(uuid/uuid.h, [
-            AC_SEARCH_LIBS(uuid_generate, uuid, [
-                test x"$ac_cv_search_uuid_generate" != x"none required" && LIBUUID_LIBS=$ac_cv_search_uuid_generate
-                AC_DEFINE(HAVE_LIBUUID, 1, [Define if found libuuid])
-                HAVE_LIBUUID=yes
-            ], [
-                AC_MSG_ERROR([Can not find uuid_create and uuid_generate in libc or libuuid])
-            ])
-        ], [
-            AC_MSG_ERROR([Can not find uuid_create and uuid_generate in libc or libuuid])
-        ])
-        LIBS=$uuid_old_LIBS
-    ])
-])
-
-AM_CONDITIONAL(HAVE_LIBUUID, test x"$HAVE_LIBUUID" = x"yes")
 
 # check if ibus_config_get_values, which is available in ibus-1.3.99+ (git master)
 save_CFLAGS="$CFLAGS"
@@ -96,7 +76,6 @@ LIBS="$LIBS $IBUS_LIBS"
 AC_CHECK_FUNCS([ibus_config_get_values])
 CFLAGS="$save_CFLAGS"
 LIBS="$save_LIBS"
-
 
 # check env
 AC_PATH_PROG(ENV, env)
@@ -120,44 +99,12 @@ if test x"$enable_boost" = x"yes"; then
 fi
 AM_CONDITIONAL(HAVE_BOOST, test x"$enable_boost" = x"yes")
 
-# --enable-opencc
-AC_ARG_ENABLE(opencc,
-    AC_HELP_STRING([--enable-opencc],
-        [Use opencc for simplified and traditional Chinese conversion]),
-        [enable_opencc=$enableval],
-        [enable_opencc=no]
-)
-if test x"$enable_opencc" = x"yes"; then
-    # check opencc
-    PKG_CHECK_MODULES(OPENCC, [opencc], [
-        AC_DEFINE(HAVE_OPENCC, 1, [Define if found opencc])
-    ])
-fi
-
 # define GETTEXT_* variables
 GETTEXT_PACKAGE=ibus-pinyin
 AC_SUBST(GETTEXT_PACKAGE)
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE", [Gettext package])
 
 AM_GLIB_GNU_GETTEXT
-
-# --enable-db-android
-AC_ARG_ENABLE(db-android,
-    AS_HELP_STRING([--disable-db-android],
-        [do not build database from pinyin in android]),
-    [enable_db_android=$enableval],
-    [enable_db_android=yes]
-)
-AM_CONDITIONAL(IBUS_BUILD_DB_ANDROID, [test x"$enable_db_android" = x"yes" ])
-
-# --enable-db-open-phrase
-AC_ARG_ENABLE(db-open-phrase,
-    AS_HELP_STRING([--enable-db-open-phrase],
-        [build open-phrase database]),
-    [enable_db_open_phrase=$enableval],
-    [enable_db_open_phrase=no]
-)
-AM_CONDITIONAL(IBUS_BUILD_DB_OPEN_PHRASE, [test x"$enable_db_open_phrase" = x"yes" ])
 
 # --disable-lua-extension
 AC_ARG_ENABLE(lua-extension,
@@ -207,8 +154,6 @@ setup/ibus-setup-pinyin
 setup/version.py
 data/Makefile
 data/db/Makefile
-data/db/android/Makefile
-data/db/open-phrase/Makefile
 data/db/english/Makefile
 data/icons/Makefile
 m4/Makefile
@@ -221,9 +166,6 @@ Build options:
     Version                     $VERSION
     Install prefix              $prefix
     Use boost                   $enable_boost
-    Use opencc                  $enable_opencc
-    Build database android      $enable_db_android
-    Build database open-phrase  $enable_db_open_phrase
     Build lua extension         $enable_lua_extension
     Build english input mode    $enable_english_input_mode
 ])

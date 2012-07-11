@@ -21,95 +21,73 @@
 #ifndef __PY_PHONETIC_EDITOR_H_
 #define __PY_PHONETIC_EDITOR_H_
 
-#include "PYLookupTable.h"
+#include <PyZy/InputContext.h>
+
 #include "PYEditor.h"
-#include "PYPinyinParser.h"
-#include "PYPhraseEditor.h"
-#include "PYSpecialPhraseTable.h"
+#include "PYLookupTable.h"
+#include "PYPinyinObserver.h"
+#include "PYUtil.h"
 
 namespace PY {
-
-class SpecialPhraseTable;
 
 class PhoneticEditor : public Editor {
 public:
     PhoneticEditor (PinyinProperties & props, Config & config);
+    virtual ~PhoneticEditor ();
 
 public:
     /* virtual functions */
+    virtual gboolean insert (gint ch);
+
+    virtual gboolean removeCharBefore (void);
+    virtual gboolean removeCharAfter (void);
+    virtual gboolean removeWordBefore (void);
+    virtual gboolean removeWordAfter (void);
+
+    virtual gboolean moveCursorLeft (void);
+    virtual gboolean moveCursorRight (void);
+    virtual gboolean moveCursorLeftByWord (void);
+    virtual gboolean moveCursorRightByWord (void);
+    virtual gboolean moveCursorToBegin (void);
+    virtual gboolean moveCursorToEnd (void);
+
     virtual void pageUp (void);
     virtual void pageDown (void);
     virtual void cursorUp (void);
     virtual void cursorDown (void);
-    virtual void update (void);
+    virtual void commit (void);
     virtual void reset (void);
+
     virtual void candidateClicked (guint index, guint button, guint state);
     virtual gboolean processKeyEvent (guint keyval, guint keycode, guint modifiers);
     virtual gboolean processSpace (guint keyval, guint keycode, guint modifiers);
     virtual gboolean processFunctionKey (guint keyval, guint keycode, guint modifiers);
-    virtual void updateLookupTable ();
-    virtual void updateLookupTableFast ();
-    virtual gboolean fillLookupTableByPage ();
+    virtual void updateInputText (void);
+    virtual void updateCursor (void);
+    virtual void updateAuxiliaryText (void);
+    virtual void updateAuxiliaryTextBefore (String &buffer);
+    virtual void updateAuxiliaryTextAfter (String &buffer);
+    virtual void updatePreeditText (void);
+    virtual void updateLookupTable (void);
+    virtual void updateLookupTableFast (void);
+    virtual gboolean fillLookupTableByPage (void);
+
+    void commitCallback (const String & commit_text);
 
 protected:
+    void setContext (PyZy::InputContext::InputType type);
+    void unsetContext ();
 
-    gboolean updateSpecialPhrases ();
     gboolean selectCandidate (guint i);
     gboolean selectCandidateInPage (guint i);
     gboolean resetCandidate (guint i);
     gboolean resetCandidateInPage (guint i);
-
-    void commit (const gchar *str);
-
-    /* inline functions */
-    void updatePhraseEditor ()
-    {
-        m_phrase_editor.update (m_pinyin);
-    }
-
-    const gchar * textAfterPinyin () const
-    {
-        return (const gchar *)m_text + m_pinyin_len;
-    }
-
-    const gchar * textAfterPinyin (guint i) const
-    {
-        g_assert (i <= m_pinyin.size ());
-        if ( G_UNLIKELY (i == 0))
-            return m_text;
-        i--;
-        return (const gchar *)m_text + m_pinyin[i].begin + m_pinyin[i].len;
-    }
-
-    const gchar * textAfterCursor () const
-    {
-        return (const gchar *)m_text + m_cursor;
-    }
-
-    /* pure virtual functions */
-    virtual gboolean insert (gint ch) = 0;
-    virtual gboolean removeCharBefore (void) = 0;
-    virtual gboolean removeCharAfter (void) = 0;
-    virtual gboolean removeWordBefore (void) = 0;
-    virtual gboolean removeWordAfter (void) = 0;
-    virtual gboolean moveCursorLeft (void) = 0;
-    virtual gboolean moveCursorRight (void) = 0;
-    virtual gboolean moveCursorLeftByWord (void) = 0;
-    virtual gboolean moveCursorRightByWord (void) = 0;
-    virtual gboolean moveCursorToBegin (void) = 0;
-    virtual gboolean moveCursorToEnd (void) = 0;
-    virtual void commit (void) = 0;
-    virtual void updateAuxiliaryText (void) = 0;
-    virtual void updatePreeditText (void) = 0;
+    gboolean unselectCandidates (void);
 
     /* varibles */
-    PinyinArray                 m_pinyin;
-    guint                       m_pinyin_len;
-    String                      m_buffer;
-    LookupTable                 m_lookup_table;
-    PhraseEditor                m_phrase_editor;
-    std::vector<std::string>    m_special_phrases;
-    std::string                 m_selected_special_phrase;
+    std::unique_ptr<PyZy::InputContext>  m_context;
+    PinyinObserver                       m_observer;
+    LookupTable                          m_lookup_table;
 };
 };
 

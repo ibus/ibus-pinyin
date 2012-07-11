@@ -19,9 +19,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 #include "PYPinyinProperties.h"
+
+#include <PyZy/InputContext.h>
+#include <PyZy/Variant.h>
 #include <libintl.h>
-#include "PYText.h"
+
 #include "PYConfig.h"
+#include "PYText.h"
 
 namespace PY {
 
@@ -54,7 +58,7 @@ PinyinProperties::PinyinProperties (Config & config)
                     PKGDATADIR"/icons/full-punct.svg" :
                     PKGDATADIR"/icons/half-punct.svg",
                 StaticText (_("Full/Half width punctuation"))),
-      m_prop_simp ( "mode.simp",
+      m_prop_simp ("mode.simp",
                 PROP_TYPE_NORMAL,
                 StaticText (m_mode_simp ? "简" : "繁"),
                 m_mode_simp ?
@@ -65,14 +69,14 @@ PinyinProperties::PinyinProperties (Config & config)
                 PROP_TYPE_NORMAL,
                 StaticText (_("Preferences")),
                 "ibus-setup",
-                StaticText (_("Preferences")))
+                StaticText (_("Preferences"))),
+      m_context (NULL)
 {
     m_props.append (m_prop_chinese);
     m_props.append (m_prop_full);
     m_props.append (m_prop_full_punct);
     m_props.append (m_prop_simp);
     m_props.append (m_prop_setup);
-
 }
 
 void
@@ -84,7 +88,7 @@ PinyinProperties::toggleModeChinese (void)
                                 PKGDATADIR"/icons/chinese.svg" :
                                 PKGDATADIR"/icons/english.svg");
     updateProperty (m_prop_chinese);
-    
+
     m_prop_full_punct.setSensitive (m_mode_chinese);
     updateProperty (m_prop_full_punct);
 }
@@ -115,6 +119,10 @@ void
 PinyinProperties::toggleModeSimp (void)
 {
     m_mode_simp = ! m_mode_simp;
+    if (m_context != NULL) {
+        m_context->setProperty(PyZy::InputContext::PROPERTY_MODE_SIMP,
+                               PyZy::Variant::fromBool (m_mode_simp));
+    }
     m_prop_simp.setLabel (m_mode_simp ? "简" : "繁");
     m_prop_simp.setIcon (m_mode_simp ?
                             PKGDATADIR"/icons/simp-chinese.svg" :
@@ -140,7 +148,8 @@ PinyinProperties::reset (void)
 }
 
 gboolean
-PinyinProperties::propertyActivate (const gchar *prop_name, guint prop_state) {
+PinyinProperties::propertyActivate (const gchar *prop_name, guint prop_state)
+{
     const static std::string mode_chinese ("mode.chinese");
     const static std::string mode_full ("mode.full");
     const static std::string mode_full_punct ("mode.full_punct");
@@ -165,5 +174,18 @@ PinyinProperties::propertyActivate (const gchar *prop_name, guint prop_state) {
     return FALSE;
 }
 
+void
+PinyinProperties::setContext (PyZy::InputContext *context)
+{
+    context->setProperty (PyZy::InputContext::PROPERTY_MODE_SIMP,
+                          PyZy::Variant::fromBool (m_mode_simp));
+    m_context = context;
+}
+
+void
+PinyinProperties::clearContext ()
+{
+    m_context = NULL;
+}
 
 };

@@ -21,6 +21,8 @@
 #ifndef __PY_PINYIN_PROPERTIES_H_
 #define __PY_PINYIN_PROPERTIES_H_
 
+#include <PyZy/InputContext.h>
+
 #include "PYSignal.h"
 #include "PYProperty.h"
 
@@ -53,6 +55,9 @@ public:
         return m_signal_update_property;
     }
 
+    void setContext (PyZy::InputContext *context);
+    void clearContext ();
+
 private:
     void updateProperty (Property & prop) const
     {
@@ -75,6 +80,8 @@ private:
     Property    m_prop_simp;
     Property    m_prop_setup;
     PropList    m_props;
+
+    PyZy::InputContext * m_context;
 };
 
 };

@@ -1,4 +1,3 @@
 data/ibus-setup-bopomofo.desktop.in
 data/ibus-setup-pinyin.desktop.in
 data/db/android/pydict.py
-scripts/pydict.py
