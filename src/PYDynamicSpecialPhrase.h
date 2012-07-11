@@ -24,15 +24,19 @@
 #include <ctime>
 #include <string>
 #include <glib.h>
-#include "PYSpecialPhrase.h"
 
 namespace PY {
 
-class DynamicSpecialPhrase : public SpecialPhrase {
+class DynamicSpecialPhrase {
 public:
     DynamicSpecialPhrase (const std::string &text, guint pos) :
-        SpecialPhrase (pos), m_text (text) { }
+        m_position (pos), m_text (text) { }
     ~DynamicSpecialPhrase (void);
+
+    size_t position (void) const
+    {
+      return m_position;
+    }
 
     std::string text (void);
     const std::string dec (gint d, const gchar *fmt = "%d");
@@ -52,6 +56,7 @@ public:
     const std::string traditional_number(gint64 num);
 
 private:
+    size_t m_position;
     std::string m_text;
     std::tm m_time;
 };

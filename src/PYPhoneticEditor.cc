@@ -19,27 +19,54 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 #include "PYPhoneticEditor.h"
+
+#include <cctype>
+
 #include "PYConfig.h"
+#include "PYHalfFullConverter.h"
 #include "PYPinyinProperties.h"
-#include "PYSimpTradConverter.h"
 
 namespace PY {
 
 /* init static members */
 PhoneticEditor::PhoneticEditor (PinyinProperties & props, Config & config)
     : Editor (props, config),
-      m_pinyin (MAX_PHRASE_LEN),
-      m_pinyin_len (0),
-      m_buffer (64),
-      m_lookup_table (m_config.pageSize ()),
-      m_phrase_editor (props, config)
+      m_observer (PinyinObserver(*this)),
+      m_lookup_table (m_config.pageSize ())
 {
+}
+
+PhoneticEditor::~PhoneticEditor ()
+{
+    unsetContext ();
+}
+
+void
+PhoneticEditor::setContext (PyZy::InputContext::InputType type)
+{
+    if (m_context.get () != NULL)
+        unsetContext ();
+
+    m_context.reset (PyZy::InputContext::create (type, &m_observer));
+    m_config.addContext (m_context.get ());
+    m_props.setContext (m_context.get ());
+}
+
+void
+PhoneticEditor::unsetContext ()
+{
+    if (m_context.get () == NULL)
+        return;
+
+    m_config.removeContext (m_context.get ());
+    m_props.clearContext ();
+    m_context.reset ();
 }
 
 gboolean
 PhoneticEditor::processSpace (guint keyval, guint keycode, guint modifiers)
 {
-    if (!m_text)
+    if (m_text.empty ())
         return FALSE;
     if (cmshm_filter (modifiers) != 0)
         return TRUE;
@@ -69,14 +96,11 @@ PhoneticEditor::processFunctionKey (guint keyval, guint keycode, guint modifiers
         switch (keyval) {
         case IBUS_Return:
         case IBUS_KP_Enter:
-            commit ();
+            commit();
             return TRUE;
 
         case IBUS_BackSpace:
-            if (m_phrase_editor.unselectCandidates ()) {
-                update ();
-            }
-            else {
+            if (!unselectCandidates ()) {
                 removeCharBefore ();
             }
             return TRUE;
@@ -88,40 +112,28 @@ PhoneticEditor::processFunctionKey (guint keyval, guint keycode, guint modifiers
 
         case IBUS_Left:
         case IBUS_KP_Left:
-            if (m_phrase_editor.unselectCandidates ()) {
-                update ();
-            }
-            else {
+            if (!unselectCandidates ()) {
                 moveCursorLeft ();
             }
             return TRUE;
 
         case IBUS_Right:
         case IBUS_KP_Right:
-            if (m_phrase_editor.unselectCandidates ()) {
-                update ();
-            }
-            else {
+            if (!unselectCandidates ()) {
                 moveCursorRight ();
             }
             return TRUE;
 
         case IBUS_Home:
         case IBUS_KP_Home:
-            if (m_phrase_editor.unselectCandidates ()) {
-                update ();
-            }
-            else {
+            if (!unselectCandidates ()) {
                 moveCursorToBegin ();
             }
             return TRUE;
 
         case IBUS_End:
         case IBUS_KP_End:
-            if (m_phrase_editor.unselectCandidates ()) {
-                update ();
-            }
-            else {
+            if (!unselectCandidates ()) {
                 moveCursorToEnd ();
             }
             return TRUE;
@@ -157,10 +169,7 @@ PhoneticEditor::processFunctionKey (guint keyval, guint keycode, guint modifiers
     else {
         switch (keyval) {
         case IBUS_BackSpace:
-            if (m_phrase_editor.unselectCandidates ()) {
-                update ();
-            }
-            else {
+            if (!unselectCandidates ()) {
                 removeWordBefore ();
             }
             return TRUE;
@@ -172,20 +181,14 @@ PhoneticEditor::processFunctionKey (guint keyval, guint keycode, guint modifiers
 
         case IBUS_Left:
         case IBUS_KP_Left:
-            if (m_phrase_editor.unselectCandidates ()) {
-                update ();
-            }
-            else {
+            if (!unselectCandidates ()) {
                 moveCursorLeftByWord ();
             }
             return TRUE;
 
         case IBUS_Right:
         case IBUS_KP_Right:
-            if (m_phrase_editor.unselectCandidates ()) {
-                update ();
-            }
-            else {
+            if (!unselectCandidates ()) {
                 moveCursorToEnd ();
             }
             return TRUE;
@@ -201,30 +204,6 @@ gboolean
 PhoneticEditor::processKeyEvent (guint keyval, guint keycode, guint modifiers)
 {
     return FALSE;
-}
-
-gboolean
-PhoneticEditor::updateSpecialPhrases (void)
-{
-    guint size = m_special_phrases.size ();
-    m_special_phrases.clear ();
-
-    if (!m_config.specialPhrases ())
-        return FALSE;
-
-    if (!m_selected_special_phrase.empty ())
-        return FALSE;
-
-    guint begin = m_phrase_editor.cursorInChar ();
-    guint end = m_cursor;
-
-    if (begin < end) {
-        SpecialPhraseTable::instance ().lookup (
-            m_text.substr (begin, m_cursor - begin),
-            m_special_phrases);
-    }
-
-    return size != m_special_phrases.size () || size != 0;
 }
 
 void
@@ -250,48 +229,102 @@ PhoneticEditor::updateLookupTable (void)
 gboolean
 PhoneticEditor::fillLookupTableByPage (void)
 {
-    if (!m_selected_special_phrase.empty ()) {
+    const guint filled_nr = m_lookup_table.size ();
+    const guint page_size = m_lookup_table.pageSize ();
+
+    if (!m_context->hasCandidate (filled_nr))
         return FALSE;
-    }
 
-    guint filled_nr = m_lookup_table.size ();
-    guint page_size = m_lookup_table.pageSize ();
+    for (guint i = filled_nr; i < filled_nr + page_size; i++) {
+        PyZy::Candidate candidate;
+        if (!m_context->getCandidate (i, candidate)) {
+            break;
+        }
 
-    if (m_special_phrases.size () + m_phrase_editor.candidates ().size () < filled_nr + page_size)
-        m_phrase_editor.fillCandidates ();
-
-    guint need_nr = MIN (page_size, m_special_phrases.size () + m_phrase_editor.candidates ().size () - filled_nr);
-    g_assert (need_nr >= 0);
-    if (need_nr == 0) {
-        return FALSE;
-    }
-
-    for (guint i = filled_nr; i < filled_nr + need_nr; i++) {
-        if (i < m_special_phrases.size ()) {
-            Text text (m_special_phrases[i].c_str ());
+        Text text (candidate.text);
+        switch (candidate.type) {
+        case PyZy::USER_PHRASE:
+            text.appendAttribute (IBUS_ATTR_TYPE_FOREGROUND, 0x000000ef, 0, -1);
+            break;
+        case PyZy::SPECIAL_PHRASE:
             text.appendAttribute (IBUS_ATTR_TYPE_FOREGROUND, 0x0000ef00, 0, -1);
-            m_lookup_table.appendCandidate (text);
+            break;
+        default:
+            break;
         }
-        else {
-            if (G_LIKELY (m_props.modeSimp ())) {
-                Text text (m_phrase_editor.candidate (i - m_special_phrases.size ()));
-                if (m_phrase_editor.candidateIsUserPhease (i - m_special_phrases.size ()))
-                    text.appendAttribute (IBUS_ATTR_TYPE_FOREGROUND, 0x000000ef, 0, -1);
-                m_lookup_table.appendCandidate (text);
-            }
-            else {
-                m_buffer.truncate (0);
-                SimpTradConverter::simpToTrad (m_phrase_editor.candidate (i - m_special_phrases.size ()), m_buffer);
-                Text text (m_buffer);
-                if (m_phrase_editor.candidateIsUserPhease (i - m_special_phrases.size ()))
-                    text.appendAttribute (IBUS_ATTR_TYPE_FOREGROUND, 0x000000ef, 0, -1);
-                m_lookup_table.appendCandidate (text);
-            }
-        }
+        m_lookup_table.appendCandidate (text);
     }
-
 
     return TRUE;
+}
+
+gboolean
+PhoneticEditor::insert (gint ch)
+{
+    if (!isascii(ch)) {
+        return false;
+    }
+    return m_context->insert (ch);
+}
+
+gboolean
+PhoneticEditor::removeCharBefore (void)
+{
+    return m_context->removeCharBefore ();
+}
+
+gboolean
+PhoneticEditor::removeCharAfter (void)
+{
+    return m_context->removeCharAfter ();
+}
+
+gboolean
+PhoneticEditor::removeWordBefore (void)
+{
+    return m_context->removeWordBefore ();
+}
+
+gboolean
+PhoneticEditor::removeWordAfter (void)
+{
+    return m_context->removeWordAfter ();
+}
+
+gboolean
+PhoneticEditor::moveCursorLeft (void)
+{
+    return m_context->moveCursorLeft ();
+}
+
+gboolean
+PhoneticEditor::moveCursorRight (void)
+{
+    return m_context->moveCursorRight ();
+}
+
+gboolean
+PhoneticEditor::moveCursorLeftByWord (void)
+{
+    return m_context->moveCursorLeftByWord ();
+}
+
+gboolean
+PhoneticEditor::moveCursorRightByWord (void)
+{
+    return m_context->moveCursorRightByWord ();
+}
+
+gboolean
+PhoneticEditor::moveCursorToBegin (void)
+{
+    return m_context->moveCursorToBegin ();
+}
+
+gboolean
+PhoneticEditor::moveCursorToEnd (void)
+{
+    return m_context->moveCursorToEnd ();
 }
 
 void
@@ -299,8 +332,6 @@ PhoneticEditor::pageUp (void)
 {
     if (G_LIKELY (m_lookup_table.pageUp ())) {
         updateLookupTableFast ();
-        updatePreeditText ();
-        updateAuxiliaryText ();
     }
 }
 
@@ -311,8 +342,6 @@ PhoneticEditor::pageDown (void)
             (m_lookup_table.pageDown ()) ||
             (fillLookupTableByPage () && m_lookup_table.pageDown ()))) {
         updateLookupTableFast ();
-        updatePreeditText ();
-        updateAuxiliaryText ();
     }
 }
 
@@ -321,8 +350,6 @@ PhoneticEditor::cursorUp (void)
 {
     if (G_LIKELY (m_lookup_table.cursorUp ())) {
         updateLookupTableFast ();
-        updatePreeditText ();
-        updateAuxiliaryText ();
     }
 }
 
@@ -337,8 +364,6 @@ PhoneticEditor::cursorDown (void)
 
     if (G_LIKELY (m_lookup_table.cursorDown ())) {
         updateLookupTableFast ();
-        updatePreeditText ();
-        updateAuxiliaryText ();
     }
 }
 
@@ -349,66 +374,85 @@ PhoneticEditor::candidateClicked (guint index, guint button, guint state)
 }
 
 void
+PhoneticEditor::commit (void)
+{
+    m_context->commit();
+}
+
+void
 PhoneticEditor::reset (void)
 {
-    m_pinyin.clear ();
-    m_pinyin_len = 0;
-    m_lookup_table.clear ();
-    m_phrase_editor.reset ();
-    m_special_phrases.clear ();
-    m_selected_special_phrase.clear ();
-
-    Editor::reset ();
+    m_context->reset();
 }
 
 void
-PhoneticEditor::update (void)
+PhoneticEditor::updateInputText (void)
 {
-    updateLookupTable ();
-    updatePreeditText ();
-    updateAuxiliaryText ();
+    m_text = m_context->inputText ();
 }
 
 void
-PhoneticEditor::commit (const gchar *str)
+PhoneticEditor::updateCursor (void)
 {
-    StaticText text(str);
-    commitText (text);
+    m_cursor = m_context->cursor ();
+}
+
+void
+PhoneticEditor::updateAuxiliaryText (void)
+{
+    String text = m_context->auxiliaryText ();
+    updateAuxiliaryTextAfter (text);
+
+    if (text.empty ()) {
+        Editor::hideAuxiliaryText ();
+    } else {
+        StaticText aux_text (text);
+        Editor::updateAuxiliaryText (aux_text, TRUE);
+    }
+}
+
+void
+PhoneticEditor::updateAuxiliaryTextAfter (String &buffer)
+{
+}
+
+void
+PhoneticEditor::updateAuxiliaryTextBefore (String &buffer)
+{
+}
+
+void
+PhoneticEditor::updatePreeditText (void)
+{
+    const String &selected_text = m_context->selectedText ();
+    const String &conversion_text = m_context->conversionText ();
+    const String &rest_text = m_context->restText ();
+    const String whole_text = selected_text + conversion_text + rest_text;
+    StaticText preedit_text (whole_text);
+
+    /* underline */
+    preedit_text.appendAttribute (
+        IBUS_ATTR_TYPE_UNDERLINE, IBUS_ATTR_UNDERLINE_SINGLE, 0, -1);
+
+    /* candidate */
+    const guint begin = selected_text.utf8Length ();
+    const guint end = begin + conversion_text.utf8Length ();
+    if (!conversion_text.empty()) {
+        preedit_text.appendAttribute (IBUS_ATTR_TYPE_FOREGROUND, 0x00000000,
+                                      begin, end);
+        preedit_text.appendAttribute (IBUS_ATTR_TYPE_BACKGROUND, 0x00c8c8f0,
+                                      begin, end);
+    }
+
+    Editor::updatePreeditText (preedit_text, begin, TRUE);
 }
 
 gboolean
 PhoneticEditor::selectCandidate (guint i)
 {
-    if (i < m_special_phrases.size ()) {
-        /* select a special phrase */
-        m_selected_special_phrase = m_special_phrases[i];
-        if (m_cursor == m_text.size ()) {
-            m_buffer = m_phrase_editor.selectedString ();
-            m_buffer << m_selected_special_phrase;
-            m_phrase_editor.commit ();
-            reset ();
-            commit ((const gchar *)m_buffer);
-        }
-        else {
-            updateSpecialPhrases ();
-            update ();
-        }
-        return TRUE;
-    }
-
-    i -= m_special_phrases.size ();
-    if (m_phrase_editor.selectCandidate (i)) {
-        if (m_phrase_editor.pinyinExistsAfterCursor () ||
-            *textAfterPinyin () != '\0') {
-            updateSpecialPhrases ();
-            update ();
-        }
-        else {
-            commit ();
-        }
-        return TRUE;
-    }
-    return FALSE;
+    if (i >= m_lookup_table.size ())
+        return FALSE;
+    return m_context->selectCandidate (i);
 }
 
 gboolean
@@ -427,11 +471,7 @@ PhoneticEditor::selectCandidateInPage (guint i)
 gboolean
 PhoneticEditor::resetCandidate (guint i)
 {
-    i -= m_special_phrases.size ();
-    if (m_phrase_editor.resetCandidate (i)) {
-        update ();
-    }
-    return TRUE;
+    return m_context->resetCandidate (i);
 }
 
 gboolean
@@ -444,5 +484,28 @@ PhoneticEditor::resetCandidateInPage (guint i)
     return resetCandidate (i);
 }
 
-};
+gboolean
+PhoneticEditor::unselectCandidates ()
+{
+    return m_context->unselectCandidates ();
+}
 
+void
+PhoneticEditor::commitCallback(const String &str)
+{
+    String commit_text;
+
+    if (G_UNLIKELY (m_props.modeFull ())) {
+        for (size_t i = 0; i < str.size (); i++) {
+            commit_text.appendUnichar (HalfFullConverter::toFull (str[i]));
+        }
+    }
+    else {
+        commit_text = str;
+    }
+
+    StaticText text(commit_text);
+    commitText (text);
+}
+
+};

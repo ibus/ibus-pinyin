@@ -18,46 +18,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
-if IBUS_BUILD_DB_ANDROID
-ANDROID_DIR=android
-endif
-
-if IBUS_BUILD_DB_OPEN_PHRASE
-OPEN_PHRASE_DIR=open-phrase
-endif
-
 if IBUS_BUILD_ENGLISH_INPUT_MODE
 ENGLISH_DIR=english
 endif
 
-main_db_DATA = \
-	create_index.sql \
-	$(NULL)
-main_dbdir = $(pkgdatadir)/db
-
-EXTRA_DIST = \
-	create_index.sql \
-	$(NULL)
-
 SUBDIRS = \
-	$(ANDROID_DIR) \
-	$(OPEN_PHRASE_DIR) \
 	$(ENGLISH_DIR) \
 	$(NULL)
-
-
-install-data-hook:
-	@( \
-if test "$(NO_INDEX)" = ""; then \
-  cd $(DESTDIR)$(main_dbdir); \
-  if test -f android.db; then \
-    echo "Creating index for android.db"; \
-    sqlite3 android.db ".read create_index.sql"; \
-  fi; \
-  if test -f open-phrase.db; then \
-    echo "Creating index for open-phrase.db"; \
-    sqlite3 open-phrase.db ".read create_index.sql"; \
-  fi; \
-fi)
-
-

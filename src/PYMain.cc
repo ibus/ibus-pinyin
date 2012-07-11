@@ -22,14 +22,17 @@
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
 #endif
+
+#include <PyZy/InputContext.h>
 #include <ibus.h>
-#include <stdlib.h>
 #include <locale.h>
-#include "PYEngine.h"
-#include "PYPointer.h"
+#include <stdlib.h>
+#include <string>
+
 #include "PYBus.h"
 #include "PYConfig.h"
-#include "PYDatabase.h"
+#include "PYEngine.h"
+#include "PYPointer.h"
 
 using namespace PY;
 
@@ -85,9 +88,17 @@ start_component (void)
         exit (0);
     }
 
-    Database::init ();
     PinyinConfig::init (bus);
     BopomofoConfig::init (bus);
+    {
+      gchar *cache_dir =
+          g_build_filename (g_get_user_cache_dir (), "ibus", "pinyin", NULL);
+      gchar *config_dir =
+          g_build_filename (g_get_user_config_dir (), "ibus", "pinyin", NULL);
+      PyZy::InputContext::init (cache_dir, config_dir);
+      g_free (cache_dir);
+      g_free (config_dir);
+    }
 
     g_signal_connect ((IBusBus *)bus, "disconnected", G_CALLBACK (ibus_disconnected_cb), NULL);
 
@@ -145,14 +156,14 @@ start_component (void)
 static void
 sigterm_cb (int sig)
 {
-    PY::Database::finalize ();
+    PyZy::InputContext::finalize ();
     ::exit (EXIT_FAILURE);
 }
 
 static void
 atexit_cb (void)
 {
-    PY::Database::finalize ();
+    PyZy::InputContext::finalize ();
 }
 
 int

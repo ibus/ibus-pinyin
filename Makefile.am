@@ -32,10 +32,8 @@ SUBDIRS = \
 	$(NULL)
 
 DISTCHECK_CONFIGURE_FLAGS = \
-	CFLAGS='-g3 -O3 -Wall' \
-	CXXFLAGS='-g3 -O3 -Wall' \
-	--enable-db-android \
-	--enable-db-open-phrase \
+	CFLAGS='-g -O3 -Wall' \
+	CXXFLAGS='-g -O3 -Wall' \
 	$(NULL)
 
 ACLOCAL_AMFLAGS = -I m4

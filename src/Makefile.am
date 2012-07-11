@@ -23,12 +23,14 @@
 # AM_CFLAGS = \
 # 	@IBUS_CFLAGS@ \
 # 	@SQLITE_CFLAGS@ \
+# 	@PYZY_CFLAGS@ \
 # 	-DPKGDATADIR=\"$(pkgdatadir)\" \
 # 	$(NULL)
 # AM_CXXFLAGS = $(AM_CFLAGS)
 # AM_LDADD = \
 # 	@IBUS_LIBS@ \
 # 	@SQLITE_LIBS@ \
+# 	@PYZY_LIBS@ \
 # 	$(NULL)
 # 
 
@@ -36,17 +38,14 @@ libexec_PROGRAMS = ibus-engine-pinyin
 ibus_engine_pinyin_built_c_sources = \
 	$(NULL)
 ibus_engine_pinyin_built_h_sources = \
-	PYBopomofoKeyboard.h \
-	PYPinyinParserTable.h \
 	PYPunctTable.h \
-	PYSimpTradConverterTable.h \
 	$(NULL)
 ibus_engine_pinyin_c_sources = \
 	PYBopomofoEditor.cc \
 	PYBopomofoEngine.cc \
 	PYConfig.cc \
-	PYDatabase.cc \
 	PYDoublePinyinEditor.cc \
+	PYDynamicSpecialPhrase.cc \
 	PYEditor.cc \
 	PYEngine.cc \
 	PYFallbackEditor.cc \
@@ -54,28 +53,22 @@ ibus_engine_pinyin_c_sources = \
 	PYHalfFullConverter.cc \
 	PYMain.cc \
 	PYPhoneticEditor.cc \
-	PYPhraseEditor.cc \
 	PYPinyinEditor.cc \
 	PYPinyinEngine.cc \
-	PYPinyinParser.cc \
+	PYPinyinObserver.cc \
 	PYPinyinProperties.cc \
 	PYPunctEditor.cc \
-	PYSimpTradConverter.cc \
-	PYDynamicSpecialPhrase.cc \
-	PYSpecialPhrase.cc \
-	PYSpecialPhraseTable.cc \
 	$(NULL)
 ibus_engine_pinyin_h_sources = \
-	PYBopomofo.h \
 	PYBopomofoEditor.h \
 	PYBopomofoEngine.h \
 	PYBus.h \
 	PYConfig.h \
-	PYDatabase.h \
 	PYDoublePinyinEditor.h \
-	PYDoublePinyinTable.h \
+	PYDynamicSpecialPhrase.h \
 	PYEditor.h \
 	PYEngine.h \
+	PYEnglishEditor.h \
 	PYExtEditor.h \
 	PYFallbackEditor.h \
 	PYFullPinyinEditor.h \
@@ -83,13 +76,9 @@ ibus_engine_pinyin_h_sources = \
 	PYLookupTable.h \
 	PYObject.h \
 	PYPhoneticEditor.h \
-	PYPhrase.h \
-	PYPhraseArray.h \
-	PYPhraseEditor.h \
-	PYPinyinArray.h \
 	PYPinyinEditor.h \
 	PYPinyinEngine.h \
-	PYPinyinParser.h \
+	PYPinyinObserver.h \
 	PYPinyinProperties.h \
 	PYPointer.h \
 	PYProperty.h \
@@ -97,15 +86,10 @@ ibus_engine_pinyin_h_sources = \
 	PYRawEditor.h \
 	PYRegex.h \
 	PYSignal.h \
-	PYSimpTradConverter.h \
-	PYSpecialPhrase.h \
-	PYDynamicSpecialPhrase.h \
-	PYSpecialPhraseTable.h \
 	PYString.h \
 	PYText.h \
 	PYTypes.h \
 	PYUtil.h \
-	PYEnglishEditor.h \
 	$(NULL)
 
 if IBUS_BUILD_LUA_EXTENSION
@@ -127,7 +111,7 @@ ibus_engine_pinyin_SOURCES = \
 ibus_engine_pinyin_CXXFLAGS = \
 	@IBUS_CFLAGS@ \
 	@SQLITE_CFLAGS@ \
-	@OPENCC_CFLAGS@ \
+	@PYZY_CFLAGS@ \
 	-DGETTEXT_PACKAGE=\"@GETTEXT_PACKAGE@\" \
 	-DPKGDATADIR=\"$(pkgdatadir)\" \
 	-DLIBEXECDIR=\"$(libexecdir)\" \
@@ -146,13 +130,8 @@ endif
 ibus_engine_pinyin_LDADD = \
 	@IBUS_LIBS@ \
 	@SQLITE_LIBS@ \
-	@OPENCC_LIBS@ \
+	@PYZY_LIBS@ \
 	$(NULL)
-
-if HAVE_LIBUUID
-ibus_engine_pinyin_CXXFLAGS += $(LIBUUID_CFLAGS)
-ibus_engine_pinyin_LDADD += $(LIBUUID_LIBS)
-endif
 
 if IBUS_BUILD_LUA_EXTENSION
     ibus_engine_pinyin_CXXFLAGS +=  \
@@ -197,34 +176,12 @@ EXTRA_DIST = \
 
 CLEANFILES = \
 	pinyin.xml \
-	ZhConversion.* \
 	$(NULL)
-
-PYBopomofoKeyboard.h:
-	$(AM_V_GEN) \
-	$(PYTHON) $(top_srcdir)/scripts/genbopomofokeyboard.py > $@ || \
-		( $(RM) $@; exit 1 )
-
-PYPinyinParserTable.h:
-	$(AM_V_GEN) \
-	$(PYTHON) $(top_srcdir)/scripts/genpytable.py > $@ || \
-		( $(RM) $@; exit 1 )
 
 PYPunctTable.h:
 	$(AM_V_GEN) \
 	$(PYTHON) $(top_srcdir)/scripts/genpuncttable.py > $@ || \
 		( $(RM) $@; exit 1 )
-
-PYSimpTradConverterTable.h:
-	$(AM_V_GEN) \
-	$(PYTHON) $(top_srcdir)/scripts/update-simptrad-table.py > $@ || \
-		( $(RM) $@; exit 1 )
-
-update-simptrad-table:
-	$(RM) ZhConversion.php ZhConversion.py PYSimpTradConverterTable.h
-	$(MAKE) ZhConversion.php
-	$(MAKE) ZhConversion.py
-	$(MAKE) PYSimpTradConverterTable.h
 
 pinyin.xml: pinyin.xml.in
 	$(AM_V_GEN) \
@@ -243,13 +200,3 @@ test: ibus-engine-pinyin
 # test: ibus-engine-pinyin
 # 	$(ENV) G_DEBUG=fatal_warnings \
 # 	$(builddir)/ibus-engine-pinyin
-ZhConversion.php:
-	$(AM_V_GEN) \
-	svn cat http://svn.wikimedia.org/svnroot/mediawiki/trunk/phase3/includes/ZhConversion.php > $@ || \
-		( $(RM) $@; exit 1 )
-
-ZhConversion.py: ZhConversion.php
-	$(AM_V_GEN) \
-	php $(top_srcdir)/scripts/php_2_py.php > $@ || \
-		( $(RM) $@; exit 1 )
-

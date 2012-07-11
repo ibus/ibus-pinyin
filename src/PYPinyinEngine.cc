@@ -313,4 +313,3 @@ PinyinEngine::connectEditorSignals (EditorPtr editor)
 }
 
 };
-

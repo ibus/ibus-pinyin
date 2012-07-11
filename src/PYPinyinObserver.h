@@ -18,16 +18,31 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-#ifndef __PY_PHRASE_ARRAY_H_
-#define __PY_PHRASE_ARRAY_H_
+#ifndef __PY_PINYIN_OBSERVER_H_
+#define __PY_PINYIN_OBSERVER_H_
 
-#include <vector>
-#include "PYPhrase.h"
+#include <PyZy/InputContext.h>
 
 namespace PY {
 
-typedef std::vector<Phrase> PhraseArray;
+class PhoneticEditor;
 
+class PinyinObserver : public PyZy::InputContext::Observer {
+public:
+    explicit PinyinObserver (PhoneticEditor &editor);
+
+    virtual void commitText (const PyZy::InputContext * context,
+                             const std::string &commit_text);
+    virtual void inputTextChanged (const PyZy::InputContext * context);
+    virtual void cursorChanged (const PyZy::InputContext * context);
+    virtual void preeditTextChanged (const PyZy::InputContext * context);
+    virtual void auxiliaryTextChanged (const PyZy::InputContext * context);
+    virtual void candidatesChanged (const PyZy::InputContext * context);
+
+private:
+    PhoneticEditor &m_editor;
 };
+
+}  // namespace PY
 
 #endif

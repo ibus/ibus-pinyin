@@ -28,49 +28,26 @@ namespace PY {
 
 class Config;
 
-#define MAX_PINYIN_LEN 64
-
 class BopomofoEditor : public PhoneticEditor {
 
 public:
     BopomofoEditor (PinyinProperties & props, Config & config);
-    ~BopomofoEditor (void);
+    virtual ~BopomofoEditor (void);
 
 protected:
-    std::wstring bopomofo;
-    gboolean m_select_mode;
-
     gboolean processGuideKey (guint keyval, guint keycode, guint modifiers);
     gboolean processAuxiliarySelectKey (guint keyval, guint keycode, guint modifiers);
     gboolean processSelectKey (guint keyval, guint keycode, guint modifiers);
     gboolean processBopomofo (guint keyval, guint keycode, guint modifiers);
     gboolean processKeyEvent (guint keyval, guint keycode, guint modifiers);
 
-    void updateAuxiliaryText ();
     void updateLookupTable ();
     void updateLookupTableFast ();
     void updateLookupTableLabel ();
-    void updatePinyin ();
-    void updatePreeditText ();
 
-    void commit ();
     void reset ();
 
-    gboolean insert (gint ch);
-    gint keyvalToBopomofo(gint ch);
-
-    gboolean removeCharBefore (void);
-    gboolean removeCharAfter (void);
-    gboolean removeWordBefore (void);
-    gboolean removeWordAfter (void);
-
-    gboolean moveCursorLeft (void);
-    gboolean moveCursorRight (void);
-    gboolean moveCursorLeftByWord (void);
-    gboolean moveCursorRightByWord (void);
-    gboolean moveCursorToBegin (void);
-    gboolean moveCursorToEnd (void);
-
+    gboolean m_select_mode;
 };
 
 };

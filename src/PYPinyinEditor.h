@@ -27,13 +27,10 @@ namespace PY {
 
 class Config;
 
-#define MAX_PINYIN_LEN 64
-
-class SpecialPhraseTable;
-
 class PinyinEditor : public PhoneticEditor {
 public:
     PinyinEditor (PinyinProperties & props, Config & config);
+    virtual ~PinyinEditor ();
 
 protected:
     gboolean processPinyin (guint keyval, guint keycode, guint modifiers);
@@ -41,15 +38,9 @@ protected:
     gboolean processPunct (guint keyval, guint keycode, guint modifiers);
     gboolean processFunctionKey (guint keyval, guint keycode, guint modifiers);
 
-    void commit ();
-
-    void updateAuxiliaryText (void);
-    void updateLookupTable (void);
-    void updatePreeditText (void);
+    virtual void updateLookupTable (void);
 
     virtual gboolean processKeyEvent (guint keyval, guint keycode, guint modifiers);
-    virtual void updateAuxiliaryTextBefore (String &buffer) { };
-    virtual void updateAuxiliaryTextAfter  (String &buffer) { };
 };
 
 };
