@@ -1,0 +1,7 @@
+[Desktop Entry]
+_Name=IBus Pinyin Setup
+Exec=@libexecdir@/ibus-setup-pinyin
+Icon=@pkgdatadir@/icons/ibus-pinyin.svg
+NoDisplay=true
+Type=Application
+StartupNotify=true

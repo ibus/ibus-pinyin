@@ -1,2 +1,6 @@
 db
 stamp-db
+ibus-setup-bopomofo.desktop
+ibus-setup-bopomofo.desktop.in
+ibus-setup-pinyin.desktop
+ibus-setup-pinyin.desktop.in
