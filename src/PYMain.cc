@@ -100,25 +100,29 @@ start_component (void)
                                     "",
                                     "ibus-pinyin");
     ibus_component_add_engine (component,
-                               ibus_engine_desc_new ("pinyin-debug",
-                                                     N_("Pinyin (debug)"),
-                                                     N_("Pinyin input method (debug)"),
-                                                     "zh_CN",
-                                                     "GPL",
-                                                     "Peng Huang <shawn.p.huang@gmail.com>\n"
-                                                     "BYVoid <byvoid1@gmail.com>",
-                                                     PKGDATADIR "/icons/ibus-pinyin.svg",
-                                                     "us"));
+            ibus_engine_desc_new_varargs ("name", "pinyin-debug",
+                                          "longname", N_("Pinyin (debug)"),
+                                          "description", N_("Pinyin input method (debug)"),
+                                          "language", "zh_CN",
+                                          "license", "GPL",
+                                          "author", "Peng Huang <shawn.p.huang@gmail.com>\n"
+                                                    "BYVoid <byvoid1@gmail.com>",
+                                          "icon", PKGDATADIR "/icons/ibus-pinyin.svg",
+                                          "layout", "us",
+                                          "symbol", "\u4e2d",
+                                          NULL));
     ibus_component_add_engine (component,
-                               ibus_engine_desc_new ("bopomofo-debug",
-                                                     N_("Bopomofo (debug)"),
-                                                     N_("Bopomofo input method (debug)"),
-                                                     "zh_CN",
-                                                     "GPL",
-                                                     "BYVoid <byvoid1@gmail.com>\n"
-                                                     "Peng Huang <shawn.p.huang@gmail.com>",
-                                                     PKGDATADIR "/icons/ibus-bopomofo.svg",
-                                                     "us"));
+            ibus_engine_desc_new_varargs ("name", "bopomofo-debug",
+                                          "longname", N_("Bopomofo (debug)"),
+                                          "description", N_("Bopomofo input method (debug)"),
+                                          "language", "zh_CN",
+                                          "license", "GPL",
+                                          "author", "BYVoid <byvoid1@gmail.com>\n"
+                                                    "Peng Huang <shawn.p.huang@gmail.com>",
+                                          "icon", PKGDATADIR "/icons/ibus-bopomofo.svg",
+                                          "layout", "us",
+                                          "symbol", "\u4e2d",
+                                          NULL));
 
     factory = ibus_factory_new (ibus_bus_get_connection (bus));
 
