@@ -1,5 +1,12 @@
 [Desktop Entry]
-_Name=IBus Pinyin Setup
+Name=IBus Pinyin Setup
+Name[zh_CN]=IBus 拼音配置工具
+Name[zh_TW]=IBus 拼音配置工具
+Name[zh_HK]=IBus 拼音配置工具
+Comment=Set ibus-pinyin Preferences
+Comment[zh_CN]=设置 IBus 拼音首选项
+Comment[zh_TW]=設定 IBus 拼音個人偏好
+Comment[zh_HK]=設定 IBus 拼音個人偏好
 Exec=@libexecdir@/ibus-setup-pinyin
 Icon=@pkgdatadir@/icons/ibus-pinyin.svg
 NoDisplay=true

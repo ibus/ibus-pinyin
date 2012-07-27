@@ -1,5 +1,12 @@
 [Desktop Entry]
-_Name=IBus Bopomofo Preferences
+Name=IBus Bopomofo Preferences
+Name[zh_CN]=IBus 注音配置工具
+Name[zh_TW]=IBus 注音配置工具
+Name[zh_HK]=IBus 注音配置工具
+Comment=Set ibus-Bopomofo Preferences
+Comment[zh_CN]=设置 IBus 注音首选项
+Comment[zh_TW]=設定 IBus 注音個人偏好
+Comment[zh_HK]=設定 IBus 注音個人偏好
 Exec=@libexecdir@/ibus-setup-pinyin bopomofo
 Icon=@pkgdatadir@/icons/ibus-bopomofo.svg
 NoDisplay=true
