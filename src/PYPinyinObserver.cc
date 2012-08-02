@@ -32,33 +32,33 @@ PinyinObserver::PinyinObserver (PhoneticEditor &editor)
 }
 
 void
-PinyinObserver::commitText (const PyZy::InputContext * context,
+PinyinObserver::commitText (PyZy::InputContext * context,
                             const std::string &commit_text)
 {
     m_editor.commitCallback (String(commit_text));
 }
 
-void PinyinObserver::inputTextChanged (const PyZy::InputContext * context)
+void PinyinObserver::inputTextChanged (PyZy::InputContext * context)
 {
     m_editor.updateInputText ();
 }
 
-void PinyinObserver::cursorChanged (const PyZy::InputContext * context)
+void PinyinObserver::cursorChanged (PyZy::InputContext * context)
 {
     m_editor.updateCursor ();
 }
 
-void PinyinObserver::preeditTextChanged (const PyZy::InputContext * context)
+void PinyinObserver::preeditTextChanged (PyZy::InputContext * context)
 {
     m_editor.updatePreeditText ();
 }
 
-void PinyinObserver::auxiliaryTextChanged (const PyZy::InputContext * context)
+void PinyinObserver::auxiliaryTextChanged (PyZy::InputContext * context)
 {
     m_editor.updateAuxiliaryText ();
 }
 
-void PinyinObserver::candidatesChanged (const PyZy::InputContext * context)
+void PinyinObserver::candidatesChanged (PyZy::InputContext * context)
 {
     m_editor.updateLookupTable ();
 }

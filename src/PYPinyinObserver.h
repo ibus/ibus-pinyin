@@ -31,13 +31,13 @@ class PinyinObserver : public PyZy::InputContext::Observer {
 public:
     explicit PinyinObserver (PhoneticEditor &editor);
 
-    virtual void commitText (const PyZy::InputContext * context,
+    virtual void commitText (PyZy::InputContext * context,
                              const std::string &commit_text);
-    virtual void inputTextChanged (const PyZy::InputContext * context);
-    virtual void cursorChanged (const PyZy::InputContext * context);
-    virtual void preeditTextChanged (const PyZy::InputContext * context);
-    virtual void auxiliaryTextChanged (const PyZy::InputContext * context);
-    virtual void candidatesChanged (const PyZy::InputContext * context);
+    virtual void inputTextChanged (PyZy::InputContext * context);
+    virtual void cursorChanged (PyZy::InputContext * context);
+    virtual void preeditTextChanged (PyZy::InputContext * context);
+    virtual void auxiliaryTextChanged (PyZy::InputContext * context);
+    virtual void candidatesChanged (PyZy::InputContext * context);
 
 private:
     PhoneticEditor &m_editor;
