@@ -47,13 +47,14 @@ rm -rf $RPM_BUILD_ROOT
 %files -f %{name}.lang
 %defattr(-,root,root,-)
 %doc AUTHORS COPYING README
-%{_libexecdir}/ibus-engine-pinyin
-%{_libexecdir}/ibus-setup-pinyin
+%dir %{_datadir}/@PACKAGE@
 %{_datadir}/@PACKAGE@/phrases.txt
 %{_datadir}/@PACKAGE@/icons
 %{_datadir}/@PACKAGE@/setup
-%dir %{_datadir}/@PACKAGE@
+%{_datadir}/applications/*
 %{_datadir}/ibus/component/*
+%{_libexecdir}/ibus-engine-pinyin
+%{_libexecdir}/ibus-setup-pinyin
 
 %changelog
 * Fri Aug 08 2008 Peng Huang <shawn.p.huang@gmail.com> - @VERSION@-1

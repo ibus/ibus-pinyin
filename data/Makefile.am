@@ -36,10 +36,16 @@ $(desktop_in_files): %.desktop.in: %.desktop.in.in Makefile
 		-e "s|\@pkgdatadir\@|$(pkgdatadir)|" \
 		$< > $@.tmp && mv $@.tmp $@
 
-desktopdir=$(datadir)/applications
-desktop_DATA = $(desktop_in_files:.desktop.in=.desktop)
+desktop_files = $(desktop_in_files:.desktop.in=.desktop)
+
+desktopdir = $(datadir)/applications
+desktop_DATA = $(desktop_files)
+
+EXTRA_DIST = $(desktop_in_in_files)
 
 @INTLTOOL_DESKTOP_RULE@
 
 CLEANFILES = \
-	$(desktop_DATA)
+	$(desktop_files) \
+	$(desktop_in_files) \
+	$(NULL)
