@@ -24,6 +24,7 @@ Peng Wu &lt;alexepico@gmail.com&gt;</author>
 			<description>Pinyin input method</description>
 			<rank>99</rank>
 			<symbol>&#x4E2D;</symbol>
+			<setup>${libexecdir}/ibus-setup-pinyin pinyin</setup>
 		</engine>
 		<engine>
 			<name>bopomofo</name>
@@ -38,6 +39,7 @@ Peng Wu &lt;alexepico@gmail.com&gt;</author>
 			<description>Bopomofo input method</description>
 			<rank>98</rank>
 			<symbol>&#x4E2D;</symbol>
+			<setup>${libexecdir}/ibus-setup-pinyin bopomofo</setup>
 		</engine>
 	</engines>
 
