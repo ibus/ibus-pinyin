@@ -117,6 +117,7 @@ AC_ARG_ENABLE(lua-extension,
 # check lua
 PKG_CHECK_MODULES(LUA, [
     lua >= 5.1
+    lua < 5.2
 ], [],
 [has_lua_extension=no]
 )
