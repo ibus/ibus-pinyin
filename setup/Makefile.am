@@ -37,13 +37,13 @@ EXTRA_DIST = \
 	$(NULL)
 
 test-pinyin:
-	$(ENV) DBUS_DEBUG=true \
+	$(ENV_IBUS_TEST) DBUS_DEBUG=true \
 		   IBUS_LOCALEDIR=@localedir@ \
 		   PYTHONPATH=$(abs_top_srcdir):$(pyexecdir) \
 		   $(PYTHON) $(srcdir)/main.py pinyin
 
 test-bopomofo:
-	$(ENV) DBUS_DEBUG=true \
+	$(ENV_IBUS_TEST) DBUS_DEBUG=true \
 		   IBUS_LOCALEDIR=@localedir@ \
 		   PYTHONPATH=$(abs_top_srcdir):$(pyexecdir) \
 		   $(PYTHON) $(srcdir)/main.py bopomofo

@@ -193,10 +193,10 @@ pinyin.xml: pinyin.xml.in
 	) > $@
 
 test: ibus-engine-pinyin
-	$(ENV) \
+	$(ENV_IBUS_TEST) \
 		G_DEBUG=fatal_criticals \
 		$(builddir)/ibus-engine-pinyin
 
 # test: ibus-engine-pinyin
-# 	$(ENV) G_DEBUG=fatal_warnings \
+# 	$(ENV_IBUS_TEST) G_DEBUG=fatal_warnings \
 # 	$(builddir)/ibus-engine-pinyin

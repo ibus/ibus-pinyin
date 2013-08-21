@@ -78,8 +78,8 @@ CFLAGS="$save_CFLAGS"
 LIBS="$save_LIBS"
 
 # check env
-AC_PATH_PROG(ENV, env)
-AC_SUBST(ENV)
+AC_PATH_PROG(ENV_IBUS_TEST, env)
+AC_SUBST(ENV_IBUS_TEST)
 
 # check python
 AM_PATH_PYTHON([2.5])
