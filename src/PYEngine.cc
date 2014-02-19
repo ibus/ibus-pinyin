@@ -67,6 +67,12 @@ static gboolean ibus_pinyin_engine_process_key_event
                                                  guint                   modifiers);
 static void     ibus_pinyin_engine_focus_in     (IBusEngine             *engine);
 static void     ibus_pinyin_engine_focus_out    (IBusEngine             *engine);
+#if IBUS_CHECK_VERSION (1, 5, 4)
+static void     ibus_pinyin_engine_set_content_type
+                                                (IBusEngine     *engine,
+                                                 guint           purpose,
+                                                 guint           hints);
+#endif
 static void     ibus_pinyin_engine_reset        (IBusEngine             *engine);
 static void     ibus_pinyin_engine_enable       (IBusEngine             *engine);
 static void     ibus_pinyin_engine_disable      (IBusEngine             *engine);
@@ -122,6 +128,10 @@ ibus_pinyin_engine_class_init (IBusPinyinEngineClass *klass)
 
     engine_class->focus_in = ibus_pinyin_engine_focus_in;
     engine_class->focus_out = ibus_pinyin_engine_focus_out;
+
+#if IBUS_CHECK_VERSION (1, 5, 4)
+    engine_class->set_content_type = ibus_pinyin_engine_set_content_type;
+#endif
 
     engine_class->page_up = ibus_pinyin_engine_page_up;
     engine_class->page_down = ibus_pinyin_engine_page_down;
@@ -182,6 +192,17 @@ ibus_pinyin_engine_process_key_event (IBusEngine     *engine,
     return pinyin->engine->processKeyEvent (keyval, keycode, modifiers);
 }
 
+#if IBUS_CHECK_VERSION (1, 5, 4)
+static void
+ibus_pinyin_engine_set_content_type (IBusEngine     *engine,
+                                     guint purpose,
+                                     guint hints)
+{
+    IBusPinyinEngine *pinyin = (IBusPinyinEngine *) engine;
+    return pinyin->engine->setContentType (purpose, hints);
+}
+#endif
+
 static void
 ibus_pinyin_engine_property_activate (IBusEngine    *engine,
                                       const gchar   *prop_name,
@@ -219,6 +240,39 @@ FUNCTION(page_down,   pageDown)
 FUNCTION(cursor_up,   cursorUp)
 FUNCTION(cursor_down, cursorDown)
 #undef FUNCTION
+
+Engine::Engine (IBusEngine *engine) : m_engine (engine)
+{
+#if IBUS_CHECK_VERSION (1, 5, 4)
+    m_input_purpose = IBUS_INPUT_PURPOSE_FREE_FORM;
+#endif
+}
+
+gboolean
+Engine::contentIsPassword()
+{
+#if IBUS_CHECK_VERSION (1, 5, 4)
+   return IBUS_INPUT_PURPOSE_PASSWORD == m_input_purpose;
+#else
+   return false;
+#endif
+}
+
+void
+Engine::focusOut (void)
+{
+#if IBUS_CHECK_VERSION (1, 5, 4)
+    m_input_purpose = IBUS_INPUT_PURPOSE_FREE_FORM;
+#endif
+}
+
+#if IBUS_CHECK_VERSION(1, 5, 4)
+void
+Engine::setContentType (guint purpose, guint hints)
+{
+    m_input_purpose = (IBusInputPurpose) purpose;
+}
+#endif
 
 Engine::~Engine (void)
 {

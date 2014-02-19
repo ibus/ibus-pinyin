@@ -82,6 +82,9 @@ PinyinEngine::processKeyEvent (guint keyval, guint keycode, guint modifiers)
 {
     gboolean retval = FALSE;
 
+    if (contentIsPassword())
+        return retval;
+
     /* check Shift + Release hotkey,
      * and then ignore other Release key event */
     if (modifiers & IBUS_RELEASE_MASK) {
@@ -195,6 +198,8 @@ PinyinEngine::focusIn (void)
 void
 PinyinEngine::focusOut (void)
 {
+    Engine::focusOut ();
+
     reset ();
 }
 
