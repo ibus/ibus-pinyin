@@ -81,6 +81,13 @@ LIBS="$save_LIBS"
 AC_PATH_PROG(ENV_IBUS_TEST, env)
 AC_SUBST(ENV_IBUS_TEST)
 
+# Define python version
+AC_ARG_WITH(python,
+    AS_HELP_STRING([--with-python[=PATH]],
+        [Select python2 or python3]),
+    [PYTHON=$with_python], []
+)
+
 # check python
 AC_ARG_WITH(python,
     AS_HELP_STRING([--with-python[=PATH]],
@@ -172,6 +179,7 @@ Build options:
     Version                     $VERSION
     Install prefix              $prefix
     Use boost                   $enable_boost
+    python                      $PYTHON
     Build lua extension         $enable_lua_extension
     Build english input mode    $enable_english_input_mode
 ])
