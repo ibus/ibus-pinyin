@@ -117,6 +117,20 @@ PinyinEngine::processKeyEvent (guint keyval, guint keycode, guint modifiers)
         return TRUE;
     }
 
+    /* Toggle full/half latin Mode when hotkey Shift + Space pressed */
+    if (keyval == IBUS_space && scmshm_test (modifiers, (IBUS_SHIFT_MASK))) {
+        m_props.toggleModeFull ();
+        m_prev_pressed_key = IBUS_space;
+        return TRUE;
+    }
+
+    /* Toggle full/half punctuation Mode when hotkey Ctrl + Shift + . pressed */
+    if (keyval == IBUS_period && scmshm_test (modifiers, (IBUS_CONTROL_MASK))) {
+        m_props.toggleModeFullPunct ();
+        m_prev_pressed_key = IBUS_period;
+        return TRUE;
+    }
+
     if (m_props.modeChinese ()) {
         if (m_input_mode == MODE_INIT &&
             ((cmshm_filter (modifiers)) == 0)) {
