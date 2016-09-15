@@ -32,7 +32,8 @@ namespace PY {
 PhoneticEditor::PhoneticEditor (PinyinProperties & props, Config & config)
     : Editor (props, config),
       m_observer (PinyinObserver(*this)),
-      m_lookup_table (m_config.pageSize ())
+      m_lookup_table (m_config.pageSize ()),
+      m_dont_update_preedit (FALSE)
 {
 }
 
@@ -382,7 +383,18 @@ PhoneticEditor::commit (void)
 void
 PhoneticEditor::reset (void)
 {
+    const String &selected_text = m_context->selectedText ();
+    const String &conversion_text = m_context->conversionText ();
+    const String &rest_text = m_context->restText ();
+
+    if (selected_text.empty () && conversion_text.empty () &&
+        rest_text.empty ())
+        m_dont_update_preedit = TRUE;
+    else
+        m_dont_update_preedit = FALSE;
+
     m_context->reset();
+    m_dont_update_preedit = FALSE;
 }
 
 void
@@ -424,6 +436,9 @@ PhoneticEditor::updateAuxiliaryTextBefore (String &buffer)
 void
 PhoneticEditor::updatePreeditText (void)
 {
+    if (m_dont_update_preedit)
+        return;
+
     const String &selected_text = m_context->selectedText ();
     const String &conversion_text = m_context->conversionText ();
     const String &rest_text = m_context->restText ();

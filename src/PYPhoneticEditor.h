@@ -88,6 +88,7 @@ protected:
     std::unique_ptr<PyZy::InputContext>  m_context;
     PinyinObserver                       m_observer;
     LookupTable                          m_lookup_table;
+    gboolean                             m_dont_update_preedit;
 };
 };
 
