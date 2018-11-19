@@ -26,5 +26,5 @@ export IBUS_PREFIX=@prefix@
 export IBUS_DATAROOTDIR=@datarootdir@
 export IBUS_LOCALEDIR=@localedir@
 cd @prefix@/share/ibus-pinyin/setup/
-exec python main.py $@
+exec @PYTHON@ main.py $@
 

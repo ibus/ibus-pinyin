@@ -20,15 +20,21 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
+from __future__ import print_function
+
 import gettext
 import locale
 import os
 import sys
 
+from gi import require_version as gi_require_version
+gi_require_version('GLib', '2.0')
+gi_require_version('Gtk', '3.0')
+gi_require_version('IBus', '1.0')
+
 from gi.repository import GLib
 from gi.repository import Gtk
 from gi.repository import IBus
-from xdg import BaseDirectory
 
 import version
 
@@ -250,8 +256,8 @@ class PreferencesDialog:
 
         def __correct_pinyin_toggled_cb(widget):
             val = widget.get_active()
-            map(lambda w: self.__builder.get_object(w[0]).set_sensitive(val),
-                self.__correct_pinyin_widgets)
+            for w in self.__correct_pinyin_widgets:
+                self.__builder.get_object(w[0]).set_sensitive(val)
         self.__correct_pinyin.connect("toggled", __correct_pinyin_toggled_cb)
 
         # init value
@@ -300,8 +306,8 @@ class PreferencesDialog:
 
         def __fuzzy_pinyin_toggled_cb(widget):
             val = widget.get_active()
-            map(lambda w: self.__builder.get_object(w[0]).set_sensitive(val),
-                self.__fuzzy_pinyin_widgets)
+            for w in self.__fuzzy_pinyin_widgets:
+                self.__builder.get_object(w[0]).set_sensitive(val)
         self.__fuzzy_pinyin.connect("toggled", __fuzzy_pinyin_toggled_cb)
 
         # init value
@@ -404,7 +410,7 @@ class PreferencesDialog:
         elif isinstance(val, str):
             var = GLib.Variant.new_string(val)
         else:
-            print >> sys.stderr, "val(%s) is not in support type." % repr(val)
+            print("val(%s) is not in support type." % repr(val), file=sys.stderr)
             return
 
         self.__values[name] = val
