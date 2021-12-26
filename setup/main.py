@@ -106,7 +106,7 @@ class PreferencesDialog:
         self.__init_full_punct = self.__builder.get_object("InitFullPunct")
         self.__init_half_punct = self.__builder.get_object("InitHalfPunct")
         self.__init_simp = self.__builder.get_object("InitSimplifiedChinese")
-        self.__init_trad = self.__builder.get_object("IniTraditionalChinese")
+        self.__init_trad = self.__builder.get_object("InitTraditionalChinese")
 
         # UI
         self.__lookup_table_page_size = self.__builder.get_object("LookupTablePageSize")
