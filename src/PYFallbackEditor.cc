@@ -205,6 +205,9 @@ FallbackEditor::processKeyEvent (guint keyval, guint keycode, guint modifiers)
 {
     gboolean retval = FALSE;
 
+    if (modifiers & IBUS_MOD4_MASK)
+        return FALSE;
+
     modifiers &= (IBUS_SHIFT_MASK |
                   IBUS_CONTROL_MASK |
                   IBUS_MOD1_MASK |
