@@ -370,9 +370,8 @@ class PreferencesDialog:
         self.__special_phrases.set_active(self.__get_value("SpecialPhrases", True))
 
         def __edit_special_phrases_clicked_cb(widget):
-            from xdg import BaseDirectory
             import shutil
-            path = os.path.join(BaseDirectory.xdg_config_home, "ibus", "pinyin")
+            path = os.path.join(GLib.get_user_config_dir(), "ibus", "pinyin")
             os.path.exists(path) or os.makedirs(path)
             path = os.path.join(path, "phrases.txt")
             if not os.path.exists(path):
