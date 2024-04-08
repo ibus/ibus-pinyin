@@ -26,6 +26,14 @@
 
 #include "lua-plugin.h"
 
+#if LUA_VERSION_NUM >= 502
+/* ugly hack for lua 5.2 */
+
+#define lua_objlen lua_rawlen
+
+#endif
+
+
 static const luaL_Reg lualibs[] = {
   {"", luaopen_base},
   {LUA_TABLIBNAME, luaopen_table},
@@ -344,7 +352,11 @@ static const luaL_Reg imelib[] = {
 };
 
 LUALIB_API int luaopen_ime (lua_State *L) {
+#if LUA_VERSION_NUM >= 502
+  luaL_newlib(L, imelib);
+#else
   luaL_register(L, LUA_IMELIBNAME, imelib);
+#endif
   return 1;
 }
 
